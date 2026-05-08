@@ -45,11 +45,13 @@ async def fetch_feed(client: httpx.AsyncClient, name: str, url: str, category: s
 async def fetch_all_rss() -> list[dict]:
     tasks = []
     headers = {
-        "User-Agent": (
-            "Mozilla/5.0 (compatible; NewsFeeder/1.0; +https://github.com/NewsFeeder)"
-        )
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+        "Accept": "application/rss+xml, application/xml, text/xml, */*",
+        "Accept-Language": "en-US,en;q=0.9",
+        "Accept-Encoding": "gzip, deflate",
+        "Cache-Control": "no-cache",
     }
-    async with httpx.AsyncClient(headers=headers) as client:
+    async with httpx.AsyncClient(headers=headers, follow_redirects=True) as client:
         for category, feeds in config.RSS_FEEDS.items():
             for name, url in feeds:
                 tasks.append(fetch_feed(client, name, url, category))

@@ -6,7 +6,10 @@ import db
 
 # Uses Reddit's public JSON API — no OAuth needed for read-only public posts
 REDDIT_BASE = "https://www.reddit.com"
-HEADERS = {"User-Agent": config.REDDIT_USER_AGENT}
+HEADERS = {
+    "User-Agent": config.REDDIT_USER_AGENT,
+    "Accept": "application/json",
+}
 
 
 async def fetch_subreddit(client: httpx.AsyncClient, sub: str) -> list[dict]:
