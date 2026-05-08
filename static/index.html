@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>News Feeder</title>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #22263a;
+      --border: #2d3148;
+      --accent: #4f8ef7;
+      --accent2: #7c5cbf;
+      --green: #34d399;
+      --yellow: #fbbf24;
+      --red: #f87171;
+      --text: #e2e8f0;
+      --muted: #8892a4;
+      --radius: 12px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    /* ── Header ── */
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 1.2rem;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    .logo-icon {
+      width: 32px; height: 32px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .status-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.8rem;
+      color: var(--muted);
+      background: var(--surface2);
+      padding: 6px 12px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+    }
+
+    .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--green);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .btn {
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 600;
+      transition: all 0.15s;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+    }
+    .btn-primary:hover { background: #3a7be8; }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .btn-ghost {
+      background: var(--surface2);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:hover { background: var(--border); }
+
+    /* ── Layout ── */
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 24px 16px;
+    }
+
+    /* ── Tabs ── */
+    .tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 24px;
+      background: var(--surface);
+      padding: 4px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      width: fit-content;
+    }
+
+    .tab {
+      padding: 8px 18px;
+      border-radius: 7px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--muted);
+      transition: all 0.15s;
+      border: none;
+      background: none;
+    }
+
+    .tab.active {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .tab:hover:not(.active) { color: var(--text); }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .card-title {
+      font-size: 1rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .tag {
+      font-size: 0.7rem;
+      padding: 3px 8px;
+      border-radius: 20px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .tag-blue { background: rgba(79,142,247,0.15); color: var(--accent); }
+    .tag-purple { background: rgba(124,92,191,0.15); color: #a78bfa; }
+    .tag-green { background: rgba(52,211,153,0.15); color: var(--green); }
+    .tag-yellow { background: rgba(251,191,36,0.15); color: var(--yellow); }
+
+    /* ── Digest text ── */
+    .digest-meta {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+
+    .digest-meta span { display: flex; align-items: center; gap: 4px; }
+
+    .digest-body {
+      font-size: 0.93rem;
+      line-height: 1.75;
+      white-space: pre-wrap;
+    }
+
+    .digest-body h2, .digest-body h3 {
+      color: var(--accent);
+      margin: 20px 0 8px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .digest-body ul { padding-left: 0; list-style: none; }
+    .digest-body li {
+      padding: 4px 0 4px 16px;
+      border-left: 2px solid var(--border);
+      margin-bottom: 4px;
+    }
+    .digest-body li:hover { border-left-color: var(--accent); }
+
+    /* ── History list ── */
+    .history-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .history-item:hover { background: var(--surface2); border-color: var(--accent); }
+
+    .history-slot {
+      font-weight: 700;
+      font-size: 0.95rem;
+    }
+
+    .history-meta {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .history-count {
+      font-size: 0.8rem;
+      color: var(--muted);
+      background: var(--surface2);
+      padding: 3px 10px;
+      border-radius: 12px;
+    }
+
+    /* ── Schedule grid ── */
+    .schedule-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 10px;
+    }
+
+    .slot-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px;
+      text-align: center;
+    }
+
+    .slot-card.next {
+      border-color: var(--accent);
+      background: rgba(79,142,247,0.08);
+    }
+
+    .slot-time {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .slot-next { font-size: 0.72rem; color: var(--accent); margin-top: 4px; }
+
+    /* ── Sources table ── */
+    .source-list { display: flex; flex-direction: column; gap: 6px; }
+
+    .source-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      background: var(--surface2);
+      border-radius: 8px;
+      font-size: 0.85rem;
+    }
+
+    .source-name { font-weight: 500; }
+    .source-cat { color: var(--muted); font-size: 0.78rem; }
+
+    /* ── Stats bar ── */
+    .stats-bar {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: var(--accent);
+    }
+
+    .stat-label {
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    /* ── Empty state ── */
+    .empty {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--muted);
+    }
+
+    .empty-icon { font-size: 3rem; margin-bottom: 12px; }
+    .empty h3 { color: var(--text); margin-bottom: 8px; }
+
+    /* ── Loading ── */
+    .spinner {
+      width: 20px; height: 20px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: inline-block;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .loading-overlay {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 40px;
+      color: var(--muted);
+    }
+
+    /* ── Toast ── */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 20px;
+      font-size: 0.85rem;
+      z-index: 999;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+    }
+    #toast.show { opacity: 1; }
+    #toast.error { border-color: var(--red); color: var(--red); }
+    #toast.success { border-color: var(--green); color: var(--green); }
+
+    /* Panel visibility */
+    .panel { display: none; }
+    .panel.active { display: block; }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      header { flex-wrap: wrap; }
+      .tabs { width: 100%; }
+      .tab { flex: 1; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">📡</div>
+    News Feeder
+  </div>
+  <div class="header-right">
+    <div class="status-badge">
+      <span class="dot"></span>
+      <span id="status-text">Loading...</span>
+    </div>
+    <button class="btn btn-primary" id="fetch-btn" onclick="fetchNow()">
+      ⚡ Fetch Now
+    </button>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- Stats -->
+  <div class="stats-bar" id="stats-bar">
+    <div class="stat-card">
+      <div class="stat-value" id="stat-digests">—</div>
+      <div class="stat-label">Digests Today</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="stat-articles">—</div>
+      <div class="stat-label">Articles (3h)</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="stat-next">—</div>
+      <div class="stat-label">Next Digest</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="stat-ai">—</div>
+      <div class="stat-label">AI Summary</div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('latest', this)">Latest Digest</button>
+    <button class="tab" onclick="showTab('history', this)">History</button>
+    <button class="tab" onclick="showTab('schedule', this)">Schedule</button>
+    <button class="tab" onclick="showTab('sources', this)">Sources</button>
+  </div>
+
+  <!-- Latest Digest Panel -->
+  <div class="panel active" id="panel-latest">
+    <div id="latest-content">
+      <div class="loading-overlay"><span class="spinner"></span> Loading latest digest...</div>
+    </div>
+  </div>
+
+  <!-- History Panel -->
+  <div class="panel" id="panel-history">
+    <div id="history-content">
+      <div class="loading-overlay"><span class="spinner"></span> Loading history...</div>
+    </div>
+  </div>
+
+  <!-- Schedule Panel -->
+  <div class="panel" id="panel-schedule">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">📅 Scheduled Digest Times</div>
+        <span class="tag tag-blue" id="tz-tag">—</span>
+      </div>
+      <div class="schedule-grid" id="schedule-grid">
+        <div class="loading-overlay"><span class="spinner"></span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sources Panel -->
+  <div class="panel" id="panel-sources">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">📰 RSS Feeds</div>
+        <span class="tag tag-green">Free</span>
+      </div>
+      <div class="source-list" id="rss-sources"></div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">🔥 Other Sources</div>
+      </div>
+      <div class="source-list">
+        <div class="source-row">
+          <div><div class="source-name">Hacker News</div><div class="source-cat">Tech • Top Stories</div></div>
+          <span class="tag tag-green">Free</span>
+        </div>
+        <div class="source-row">
+          <div><div class="source-name">Reddit</div><div class="source-cat">worldnews, geopolitics, india, TamilNadu, technology, economics</div></div>
+          <span class="tag tag-green">Free</span>
+        </div>
+        <div class="source-row" id="newsapi-row" style="display:none">
+          <div><div class="source-name">NewsAPI</div><div class="source-cat">Broader coverage across all categories</div></div>
+          <span class="tag tag-blue">API Key</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div id="toast"></div>
+
+<script>
+  // ── State ──
+  let statusData = null;
+  let currentHistoryDigest = null;
+
+  // ── Init ──
+  async function init() {
+    await Promise.all([loadStatus(), loadLatest(), loadHistory(), loadSchedule()]);
+    loadSources();
+    // Auto-refresh every 60 seconds
+    setInterval(loadLatest, 60_000);
+    setInterval(loadStatus, 30_000);
+  }
+
+  // ── Status ──
+  async function loadStatus() {
+    try {
+      const r = await fetch('/api/status');
+      statusData = await r.json();
+      document.getElementById('status-text').textContent =
+        statusData.running ? `Live · ${statusData.timezone}` : 'Scheduler paused';
+      document.getElementById('stat-ai').textContent = statusData.ai_enabled ? 'ON' : 'OFF';
+      if (statusData.sources.newsapi) {
+        document.getElementById('newsapi-row').style.display = 'flex';
+      }
+    } catch(e) {
+      document.getElementById('status-text').textContent = 'Disconnected';
+    }
+  }
+
+  // ── Latest Digest ──
+  async function loadLatest() {
+    const r = await fetch('/api/latest');
+    const data = await r.json();
+
+    // Update article count stat
+    try {
+      const ar = await fetch('/api/articles?hours=3&limit=500');
+      const ad = await ar.json();
+      document.getElementById('stat-articles').textContent = ad.articles.length;
+    } catch(e) {}
+
+    const el = document.getElementById('latest-content');
+    if (!data.digest) {
+      el.innerHTML = `
+        <div class="empty">
+          <div class="empty-icon">📭</div>
+          <h3>No digest yet</h3>
+          <p>${data.message || 'Click "Fetch Now" to generate the first digest.'}</p>
+          <br>
+          <button class="btn btn-primary" onclick="fetchNow()">⚡ Fetch Now</button>
+        </div>`;
+      return;
+    }
+
+    const d = data.digest;
+    const cats = Object.entries(d.categories || {})
+      .map(([k, v]) => `<span class="tag tag-blue">${v.label} (${v.count})</span>`)
+      .join(' ');
+
+    el.innerHTML = `
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            📋 ${d.slot_label} Digest
+          </div>
+          <span class="tag tag-purple">${d.article_count} articles</span>
+        </div>
+        <div class="digest-meta">
+          <span>🕐 ${formatDate(d.created_at)}</span>
+          <span>📂 ${d.article_count} articles processed</span>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px">${cats}</div>
+        <div class="digest-body">${renderMarkdown(d.summary)}</div>
+      </div>`;
+  }
+
+  // ── History ──
+  async function loadHistory() {
+    const r = await fetch('/api/history?limit=30');
+    const data = await r.json();
+
+    const el = document.getElementById('history-content');
+    document.getElementById('stat-digests').textContent = data.history.length;
+
+    if (!data.history.length) {
+      el.innerHTML = '<div class="empty"><div class="empty-icon">📂</div><h3>No history yet</h3></div>';
+      return;
+    }
+
+    el.innerHTML = data.history.map(d => `
+      <div class="history-item" onclick="showHistoryDigest(${JSON.stringify(JSON.stringify(d))})">
+        <div>
+          <div class="history-slot">${d.slot_label}</div>
+          <div class="history-meta">${formatDate(d.created_at)}</div>
+        </div>
+        <span class="history-count">${d.article_count} articles</span>
+      </div>`).join('');
+  }
+
+  function showHistoryDigest(jsonStr) {
+    const d = JSON.parse(jsonStr);
+    const cats = Object.entries(d.categories || {})
+      .map(([k, v]) => `<span class="tag tag-blue">${v.label}</span>`).join(' ');
+
+    // Switch to history tab and show full digest
+    document.getElementById('history-content').innerHTML = `
+      <button class="btn btn-ghost" onclick="loadHistory()" style="margin-bottom:16px">← Back to history</button>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">📋 ${d.slot_label}</div>
+          <span class="tag tag-purple">${d.article_count} articles</span>
+        </div>
+        <div class="digest-meta">
+          <span>🕐 ${formatDate(d.created_at)}</span>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px">${cats}</div>
+        <div class="digest-body">${renderMarkdown(d.summary)}</div>
+      </div>`;
+  }
+
+  // ── Schedule ──
+  async function loadSchedule() {
+    const r = await fetch('/api/schedule');
+    const data = await r.json();
+
+    document.getElementById('tz-tag').textContent = data.timezone;
+
+    const now = new Date();
+
+    // Find next job
+    let nextJob = null;
+    let nextTime = null;
+    for (const job of data.jobs) {
+      if (job.next_run) {
+        const t = new Date(job.next_run);
+        if (!nextTime || t < nextTime) { nextTime = t; nextJob = job; }
+      }
+    }
+
+    if (nextTime) {
+      const diff = Math.round((nextTime - now) / 60000);
+      document.getElementById('stat-next').textContent = diff > 60
+        ? `${Math.floor(diff/60)}h ${diff%60}m`
+        : `${diff}m`;
+    }
+
+    document.getElementById('schedule-grid').innerHTML = data.jobs.map(job => {
+      const isNext = job.id === nextJob?.id;
+      const nextRun = job.next_run ? new Date(job.next_run) : null;
+      const timeStr = nextRun ? nextRun.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : '';
+      return `
+        <div class="slot-card ${isNext ? 'next' : ''}">
+          <div class="slot-time">${job.name.replace('News digest at ','')}</div>
+          ${isNext ? '<div class="slot-next">⏰ Up next</div>' : ''}
+          ${timeStr ? `<div style="font-size:0.72rem;color:var(--muted);margin-top:4px">${timeStr}</div>` : ''}
+        </div>`;
+    }).join('');
+  }
+
+  // ── Sources ──
+  function loadSources() {
+    const sources = {
+      "world": [
+        ["BBC World", "https://feeds.bbci.co.uk/news/world/rss.xml"],
+        ["Reuters", "Top News"],
+        ["Al Jazeera", "All News"],
+        ["Google News World", "Aggregated"],
+      ],
+      "geopolitics": [
+        ["Foreign Policy", "Deep Analysis"],
+        ["The Diplomat", "Asia-Pacific"],
+        ["Google News Geopolitics", "Aggregated"],
+        ["NDTV World", "India Perspective"],
+      ],
+      "tamil_nadu": [
+        ["The Hindu TN", "Tamil Nadu Section"],
+        ["Google News Tamil Nadu", "Regional Aggregated"],
+        ["NDTV Tamil Nadu", "State News"],
+        ["Times of India TN", "Regional"],
+      ],
+      "tech": [
+        ["TechCrunch", "Startups & Tech"],
+        ["Wired", "Tech Culture"],
+        ["The Verge", "Consumer Tech"],
+        ["Ars Technica", "Science & Tech"],
+        ["MIT Technology Review", "Deep Tech"],
+      ],
+      "business": [
+        ["BBC Business", "Economy"],
+        ["Google News Business", "Aggregated"],
+      ],
+      "india": [
+        ["The Hindu India", "National"],
+        ["NDTV India", "National"],
+        ["Indian Express", "National"],
+        ["Google News India", "Aggregated"],
+      ],
+    };
+
+    const catColors = {
+      world: 'tag-blue', geopolitics: 'tag-purple', tamil_nadu: 'tag-yellow',
+      tech: 'tag-green', business: 'tag-blue', india: 'tag-green',
+    };
+
+    const el = document.getElementById('rss-sources');
+    let html = '';
+    for (const [cat, feeds] of Object.entries(sources)) {
+      for (const [name, desc] of feeds) {
+        html += `
+          <div class="source-row">
+            <div>
+              <div class="source-name">${name}</div>
+              <div class="source-cat">${desc}</div>
+            </div>
+            <span class="tag ${catColors[cat] || 'tag-blue'}">${cat.replace('_',' ')}</span>
+          </div>`;
+      }
+    }
+    el.innerHTML = html;
+  }
+
+  // ── Fetch Now ──
+  async function fetchNow() {
+    const btn = document.getElementById('fetch-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Fetching...';
+    showToast('Fetching news from all sources...', 'info');
+    try {
+      const r = await fetch('/api/fetch-now', { method: 'POST' });
+      const data = await r.json();
+      if (data.status === 'ok') {
+        showToast('Digest generated!', 'success');
+        await Promise.all([loadLatest(), loadHistory(), loadSchedule()]);
+      } else {
+        showToast('Error: ' + (data.detail || 'Unknown error'), 'error');
+      }
+    } catch(e) {
+      showToast('Network error — is the server running?', 'error');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '⚡ Fetch Now';
+    }
+  }
+
+  // ── Tabs ──
+  function showTab(name, btn) {
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('panel-' + name).classList.add('active');
+    btn.classList.add('active');
+  }
+
+  // ── Helpers ──
+  function formatDate(iso) {
+    if (!iso) return '—';
+    const d = new Date(iso + (iso.endsWith('Z') ? '' : 'Z'));
+    return d.toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
+  }
+
+  function renderMarkdown(text) {
+    if (!text) return '';
+    return text
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+      .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\[BREAKING\]/g, '<span class="tag tag-purple">[BREAKING]</span>')
+      .replace(/\[IMPORTANT\]/g, '<span class="tag tag-yellow">[IMPORTANT]</span>')
+      .replace(/^- (.+)$/gm, '<li>$1</li>')
+      .replace(/(<li>.*<\/li>\n?)+/gs, m => '<ul>' + m + '</ul>')
+      .replace(/\n{2,}/g, '</p><p>')
+      .replace(/^(?!<[hul]|$)(.+)$/gm, (m, c) => c.startsWith('<') ? m : `<p>${c}</p>`);
+  }
+
+  function showToast(msg, type = 'info') {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className = 'show ' + (type === 'error' ? 'error' : type === 'success' ? 'success' : '');
+    setTimeout(() => el.className = '', 3000);
+  }
+
+  init();
+</script>
+</body>
+</html>
